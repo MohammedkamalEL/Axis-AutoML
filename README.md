@@ -1,4 +1,4 @@
-# 🚀 Spaceship Titanic — AutoML Pipeline
+# 🚀 The end-to-end AutoML engine: Drop your data, it detects and solves both Classification & Regression tasks
 
 A production-ready **AutoML pipeline** that automatically detects the task type (classification or regression), searches, tunes, and ensembles the best models — no manual configuration required.
 
