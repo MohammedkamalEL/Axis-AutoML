@@ -1,0 +1,23 @@
+artifact_path: file:D:/projects/py/mohammed.AI/spaceship_automl_project/mlruns/1/models/m-cf59c2112b0d42beb008ace714594157/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.2
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.12.0
+model_id: m-cf59c2112b0d42beb008ace714594157
+model_size_bytes: 981326
+model_uuid: m-cf59c2112b0d42beb008ace714594157
+prompts: null
+run_id: 61bfc2da629d43f58acd79c0393c4c66
+utc_time_created: '2026-05-08 09:09:42.174545'
