@@ -1,7 +1,7 @@
 [project]
 name = "spaceship-titanic-automl"
 version = "2.0.0"
-description = "AutoML pipeline for Spaceship Titanic by mohammed kamal"
+description = "AutoML pipeline by mohammed kamal"
 requires-python = ">=3.10"
 package= false
 
@@ -17,5 +17,6 @@ dependencies = [
     "seaborn>=0.13",
     "joblib>=1.3",
     "kaggle>=1.6",
+    "streamlit>=1.57.0",
 ]
 

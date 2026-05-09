@@ -24,9 +24,7 @@ from src.optimizer import optimize_model
 from src.evaluator import evaluate_pipeline, full_report, champion_metric
 from src.ensemble import build_voting_ensemble, build_stacking_ensemble, auto_weight_ensemble
 from src.tracker import log_run, log_champion
-
-# If target has ≤ this many unique values it is treated as classification
-CLASSIFICATION_THRESHOLD = 20
+from src.task_detector import TaskDetector
 
 
 class AutoMLEngine:
@@ -74,8 +72,12 @@ class AutoMLEngine:
         """Detect task, search, tune, ensemble, and select champion."""
 
         # 1. Detect / validate task
-        self._task = self._detect_task(y)
-        print(f"\n🔍 Task detected: {self._task.upper()}")
+        detector   = TaskDetector(forced_task=self.task)
+        detection  = detector.detect(y)
+        self._task = detection.task
+
+        print(f"\n🔍 Task Detection")
+        print(detection.summary())
         print(f"   Target: '{y.name}'  |  dtype: {y.dtype}  |  unique values: {y.nunique()}")
 
         # 2. Encode bool target for classification
@@ -210,19 +212,6 @@ class AutoMLEngine:
     # ──────────────────────────────────────────────────────────
     # Private helpers
     # ──────────────────────────────────────────────────────────
-
-    def _detect_task(self, y: pd.Series) -> str:
-        """Infer task type from target series, unless user forced it."""
-        if self.task != "auto":
-            return self.task
-
-        if y.dtype == bool or str(y.dtype) in ("object", "category", "bool"):
-            return "classification"
-
-        if y.nunique() <= CLASSIFICATION_THRESHOLD:
-            return "classification"
-
-        return "regression"
 
     def _primary_metric_str(self, metrics: dict) -> str:
         if self._task == "classification":

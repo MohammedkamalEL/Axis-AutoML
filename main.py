@@ -49,7 +49,7 @@ def load_data(
 
     if target_col is None:
         target_col = train_df.columns[-1]
-        print(f"ℹ️  No --target specified. Using last column: '{target_col}'")
+        print(f"ℹ No --target specified. Using last column: '{target_col}'")
 
     if target_col not in train_df.columns:
         raise ValueError(

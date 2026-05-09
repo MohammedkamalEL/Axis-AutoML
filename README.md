@@ -1,140 +1,402 @@
+<div align="center">
+
 # 🚀 Spaceship Titanic — AutoML Pipeline
 
-A production-ready **AutoML pipeline** that automatically detects the task type (classification or regression), searches, tunes, and ensembles the best models — no manual configuration required.
+**مسار تعلم آلي مؤتمت بالكامل** يكتشف نوع المهمة تلقائياً، يبحث عن أفضل النماذج، يضبط معاملاتها، ويبني أنظمة ensemble — بدون أي تدخل يدوي.
+
+[![Tests](https://github.com/MohammedkamalEL/Spaceship_Titanic_Machine_Learning_Pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/MohammedkamalEL/Spaceship_Titanic_Machine_Learning_Pipeline/actions)
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
+![Scikit-learn](https://img.shields.io/badge/scikit--learn-1.4%2B-orange?logo=scikit-learn)
+![Optuna](https://img.shields.io/badge/Optuna-3.6%2B-purple)
+![MLflow](https://img.shields.io/badge/MLflow-2.10%2B-blue?logo=mlflow)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.35%2B-red?logo=streamlit)
+
+</div>
 
 ---
 
-## 🏗 Project Structure
+## 📑 الفهرس
 
-```
-spaceship_automl/
-├── data/
-│   ├── train.csv
-│   └── test.csv
-├── src/
-│   ├── automl_engine.py    ← AutoML core orchestrator (auto task detection)
-│   ├── search_space.py     ← Model definitions + Optuna param spaces (classification & regression)
-│   ├── optimizer.py        ← Optuna TPE optimization loop (scoring adapts to task)
-│   ├── ensemble.py         ← Auto voting / stacking / weighted ensembles
-│   ├── evaluator.py        ← CV scoring + validation metrics (accuracy / RMSE / R²)
-│   ├── preprocessing.py    ← SpaceshipFeatureEngineer + ColumnTransformer
-│   ├── tracker.py          ← MLflow experiment logging
-│   ├── eda.py              ← EDA visualizations
-│   └── utils.py            ← Directory setup helpers
-├── model_registry/         ← Versioned champion models + model cards
-├── submissions/            ← Kaggle CSV submissions
-├── spaceship_experiments/  ← MLflow SQLite backend
-├── main.py                 ← CLI entry point
-└── pyproject.toml
-```
+- [نظرة عامة](#-نظرة-عامة)
+- [هيكل المشروع](#-هيكل-المشروع)
+- [المتطلبات](#-المتطلبات)
+- [التثبيت](#-التثبيت)
+- [التشغيل السريع](#-التشغيل-السريع)
+- [أوامر CLI التفصيلية](#-أوامر-cli-التفصيلية)
+- [واجهة Streamlit](#-واجهة-streamlit)
+- [كيف يعمل AutoML](#-كيف-يعمل-automl)
+- [النماذج المدعومة](#-النماذج-المدعومة)
+- [النتائج](#-النتائج)
+- [الاختبارات](#-الاختبارات)
+- [MLflow Dashboard](#-mlflow-dashboard)
 
 ---
 
-## ⚡ Quick Start
+## 🎯 نظرة عامة
 
-### 1. Install dependencies
-```bash
-python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
-pip install -e .
+يأخذ هذا المشروع أي ملف CSV ويُخرج أفضل نموذج تنبؤي ممكن **تلقائياً**:
+
+```
+البيانات (CSV)  →  اكتشاف التاسك  →  بحث النماذج  →  ضبط Optuna  →  Ensembles  →  بطل 🏆
 ```
 
-### 2. Add data
-Place `train.csv` and `test.csv` inside the `data/` folder.
-
-### 3. Run AutoML
-```bash
-# Full AutoML run — task auto-detected from target column (default: 50 trials/model)
-uv run --no-sync python main.py --automl
-
-# Quick test run (10 trials — faster)
-uv run --no-sync python main.py --automl --trials 10
-
-# Explicit target column (default: last column in train.csv)
-uv run --no-sync python main.py --automl --target Transported
-
-# Force task type manually
-uv run --no-sync python main.py --automl --task regression --target SalePrice
-
-# EDA only
-uv run --no-sync python main.py --eda
-
-# EDA + AutoML together
-uv run --no-sync python main.py --all --trials 50
-```
-
-### 4. View MLflow dashboard
-```bash
-mlflow ui --backend-store-uri sqlite:///spaceship_experiments/mlflow.db
-```
-
----
-
-## 🤖 How AutoML Works
-
-### Task Auto-Detection
-The engine inspects the target column at runtime and decides the task automatically — no manual configuration needed:
-
-| Condition | Task |
+| الميزة | التفاصيل |
 |---|---|
-| dtype is `bool` or `object` / `category` | Classification |
-| Unique values ≤ 20 | Classification |
-| Otherwise (continuous numeric) | Regression |
-
-You can always override with `--task classification` or `--task regression`.
-
-### Pipeline Steps
-1. **Feature Engineering** — `SpaceshipFeatureEngineer` extracts group features, decomposes Cabin, creates spending aggregates and age groups.
-2. **Search Space** — model families with Optuna hyperparameter spaces, selected per task type.
-3. **Optuna Optimization** — TPE sampler with MedianPruner; scoring metric switches automatically (`accuracy` for classification, `neg_RMSE` for regression).
-4. **Auto Ensembles** — three strategies built automatically:
-   - Soft / mean voting
-   - Performance-weighted voting (accuracy weight for classification, 1/RMSE weight for regression)
-   - Stacking (LogisticRegression meta-learner for classification, Ridge for regression)
-5. **Champion Selection** — highest `val_accuracy` for classification; lowest `val_RMSE` for regression.
-6. **Artifacts** — champion model, feature engineer, and model card saved to `model_registry/`.
+| **اكتشاف التاسك** | 6 قواعد مرجّحة مع نسبة ثقة (Classification / Regression) |
+| **محرك البحث** | Optuna TPE مع MedianPruner |
+| **النماذج** | 6 classification + 8 regression |
+| **الـ Ensembles** | Voting + Weighted + Stacking (تلقائية) |
+| **التتبع** | MLflow مع SQLite backend |
+| **الواجهة** | Streamlit 5-step wizard + CLI كامل |
+| **الاختبارات** | pytest + CI/CD عبر GitHub Actions |
 
 ---
 
-## 📊 Models Searched
+## 🏗 هيكل المشروع
 
-### Classification (6 base models + 3 auto ensembles)
+```
+spaceship_automl_project/
+│
+├── 📂 src/                          ← المكتبة الأساسية
+│   ├── task_detector.py             ← اكتشاف التاسك (6 قواعد + confidence)
+│   ├── automl_engine.py             ← المحرك الرئيسي — ينسّق كل شيء
+│   ├── search_space.py              ← تعريف النماذج وفضاء Optuna
+│   ├── optimizer.py                 ← حلقة Optuna TPE لكل نموذج
+│   ├── ensemble.py                  ← Voting / Weighted / Stacking
+│   ├── evaluator.py                 ← Metrics (Accuracy/F1/RMSE/R²)
+│   ├── preprocessing.py             ← SpaceshipFeatureEngineer + ColumnTransformer
+│   ├── tracker.py                   ← MLflow logging
+│   ├── eda.py                       ← رسوم EDA
+│   └── utils.py                     ← إعداد المجلدات
+│
+├── 📂 tests/                        ← Test suite كامل
+│   ├── conftest.py                  ← Fixtures مشتركة
+│   ├── test_data_processing/
+│   │   └── test_task_detector.py    ← 20 اختبار للـ task detector
+│   ├── test_preprocessing/
+│   │   └── test_pipeline.py         ← 10 اختبارات preprocessing
+│   └── test_models/
+│       ├── test_evaluator.py        ← اختبارات الـ metrics
+│       └── test_search_space.py     ← اختبارات registry النماذج
+│
+├── 📂 data/                         ← ضع هنا train.csv و test.csv
+├── 📂 model_registry/               ← نماذج محفوظة + model cards
+├── 📂 submissions/                  ← ملفات submission لـ Kaggle
+├── 📂 spaceship_experiments/        ← MLflow SQLite backend
+├── 📂 .github/workflows/
+│   └── tests.yml                    ← CI/CD — يشغّل pytest على كل push
+│
+├── app.py                           ← واجهة Streamlit
+├── main.py                          ← CLI entry point
+├── pyproject.toml                   ← المتطلبات والإعدادات
+└── pytest.ini                       ← إعدادات pytest
+```
 
-| Model | Library | val_accuracy |
+---
+
+## 💻 المتطلبات
+
+- Python **3.10** أو أحدث
+- Windows / macOS / Linux
+
+---
+
+## ⚙️ التثبيت
+
+### الطريقة 1 — باستخدام `uv` (موصى به)
+
+```powershell
+# تثبيت uv إذا لم يكن موجوداً
+pip install uv
+
+# تثبيت المشروع
+uv sync
+
+# تثبيت مع أدوات التطوير (pytest)
+uv sync --extra dev
+```
+
+### الطريقة 2 — باستخدام `pip` العادي
+
+```powershell
+# إنشاء بيئة افتراضية
+python -m venv .venv
+
+# تفعيلها
+.venv\Scripts\activate          # Windows
+source .venv/bin/activate       # macOS / Linux
+
+# تثبيت المتطلبات
+pip install -e ".[dev]"
+```
+
+### إضافة البيانات
+
+ضع الملفات في مجلد `data/`:
+
+```
+data/
+├── train.csv    ← بيانات التدريب (مع عمود الهدف)
+└── test.csv     ← بيانات الاختبار (بدون عمود الهدف)
+```
+
+> تنزيل بيانات Spaceship Titanic: [kaggle.com/competitions/spaceship-titanic](https://www.kaggle.com/competitions/spaceship-titanic/data)
+
+---
+
+## ⚡ التشغيل السريع
+
+```powershell
+# 1. تثبيت المتطلبات
+uv sync
+
+# 2. تجربة سريعة (10 trials — دقائق)
+python main.py --automl --trials 10
+
+# 3. أو شغّل الواجهة المرئية
+streamlit run app.py
+```
+
+---
+
+## 🖥 أوامر CLI التفصيلية
+
+### الأوامر الأساسية
+
+| الأمر | الوصف |
+|---|---|
+| `python main.py --automl` | تشغيل AutoML كامل |
+| `python main.py --eda` | رسوم EDA فقط |
+| `python main.py --all` | EDA + AutoML معاً |
+
+### الخيارات المتاحة
+
+| الخيار | القيمة الافتراضية | الوصف |
+|---|---|---|
+| `--trials N` | `50` | عدد Optuna trials لكل نموذج |
+| `--target COL` | آخر عمود | اسم عمود الهدف |
+| `--task TYPE` | `auto` | إجبار نوع التاسك: `classification` أو `regression` |
+| `--train PATH` | `data/train.csv` | مسار ملف التدريب |
+| `--test PATH` | `data/test.csv` | مسار ملف الاختبار |
+
+### أمثلة عملية
+
+```powershell
+# Spaceship Titanic — اكتشاف تلقائي
+python main.py --automl --trials 50
+
+# تحديد العمود يدوياً
+python main.py --automl --target Transported --trials 30
+
+# مسابقة regression (مثل House Prices)
+python main.py --automl --target SalePrice --task regression --trials 50
+
+# بيانات خارجية من مسار مختلف
+python main.py --automl --train path/to/train.csv --test path/to/test.csv --trials 20
+
+# EDA ثم AutoML في أمر واحد
+python main.py --all --trials 20
+```
+
+---
+
+## 🌐 واجهة Streamlit
+
+```powershell
+streamlit run app.py
+```
+
+يفتح المتصفح تلقائياً على `http://localhost:8501` — بـ 5 خطوات إرشادية:
+
+| الخطوة | الوصف |
+|---|---|
+| **1. Upload Data** | رفع CSV أو Excel مع عرض إحصائيات جودة البيانات |
+| **2. Select Target** | اختيار عمود الهدف مع رسم توزيعه |
+| **3. Task Detection** | عرض القواعد ونسبة الثقة + خيار التجاوز اليدوي |
+| **4. Train & Tune** | ضبط trials/folds وبدء التدريب مع log مباشر |
+| **5. Evaluate** | Leaderboard + charts + تحميل النموذج والـ predictions |
+
+---
+
+## 🤖 كيف يعمل AutoML
+
+### المرحلة 1 — اكتشاف التاسك التلقائي
+
+يفحص `TaskDetector` عمود الهدف بـ 6 قواعد مرجّحة:
+
+| القاعدة | الشرط | التصنيف | الوزن |
+|---|---|---|---|
+| 1 | dtype هو `bool` | Classification | +3 |
+| 2 | dtype هو `object` أو `category` | Classification | +3 |
+| 3 | عدد القيم الفريدة ≤ 2 | Classification | +3 |
+| 4 | عدد القيم الفريدة ≤ 20 | Classification | +2 |
+| 5 | نسبة القيم الفريدة > 5% | Regression | +3 |
+| 6a | dtype هو `float` | Regression | +2 |
+| 6b | dtype هو `int` وكثافة عالية | Regression | +1 |
+
+**نسبة الثقة** = وزن الفائز ÷ إجمالي الأوزان × 100%
+
+### المرحلة 2 — Feature Engineering
+
+`SpaceshipFeatureEngineer` يستخرج تلقائياً:
+
+| المصدر | Features الجديدة |
+|---|---|
+| `PassengerId` | `GroupId`, `GroupSize`, `IsAlone` |
+| `Cabin` | `CabinDeck`, `CabinNum`, `CabinSide` |
+| Spending columns | `TotalSpending`, `HasSpending` |
+| `Age` | `AgeGroup` (Child / Teen / YoungAdult / Adult / Senior) |
+
+### المرحلة 3 — البحث والضبط
+
+```
+لكل نموذج في search_space:
+    Optuna TPE → يجرّب N trial → يختار أفضل hyperparameters
+    → يُقيّم على validation set → يُسجّل في MLflow
+```
+
+### المرحلة 4 — Ensembles التلقائية
+
+| النوع | الآلية | Meta-learner |
+|---|---|---|
+| **Soft Voting** | متوسط الاحتمالات / القيم | — |
+| **Weighted Voting** | وزن ∝ accuracy أو 1/RMSE | — |
+| **Stacking** | تكديس النماذج | LR (classification) · Ridge (regression) |
+
+### المرحلة 5 — اختيار البطل
+
+```python
+# Classification  → أعلى val_accuracy
+# Regression      → أدنى val_RMSE
+champion = max(all_models, key=champion_metric)
+```
+
+---
+
+## 📊 النماذج المدعومة
+
+### Classification (6 نماذج + 3 ensembles)
+
+| النموذج | المكتبة | val_accuracy |
 |---|---|---|
 | 🏆 RandomForest | sklearn | 0.8154 |
 | GradientBoosting | sklearn | 0.8045 |
 | XGBoost | xgboost | 0.8045 |
 | WeightedEnsemble | auto-built | 0.8045 |
 | VotingEnsemble | auto-built | 0.8039 |
-| StackingEnsemble | auto-built | 0.8016 |
 | LightGBM | lightgbm | 0.8022 |
+| StackingEnsemble | auto-built | 0.8016 |
 | LogisticRegression | sklearn | 0.7930 |
 | ExtraTrees | sklearn | 0.7890 |
 
-### Regression (8 base models + 3 auto ensembles)
+### Regression (8 نماذج + 3 ensembles)
 
-| Model | Library | Metric |
+| النموذج | المكتبة | Metrics |
 |---|---|---|
-| RandomForestRegressor | sklearn | val_rmse / val_r2 |
-| GradientBoostingRegressor | sklearn | val_rmse / val_r2 |
-| XGBoostRegressor | xgboost | val_rmse / val_r2 |
-| LightGBMRegressor | lightgbm | val_rmse / val_r2 |
-| Ridge | sklearn | val_rmse / val_r2 |
-| Lasso | sklearn | val_rmse / val_r2 |
-| ElasticNet | sklearn | val_rmse / val_r2 |
-| ExtraTreesRegressor | sklearn | val_rmse / val_r2 |
-| VotingEnsemble | auto-built | val_rmse / val_r2 |
-| WeightedEnsemble | auto-built | val_rmse / val_r2 |
-| StackingEnsemble | auto-built | val_rmse / val_r2 |
+| RandomForestRegressor | sklearn | RMSE / R² / MAE / MAPE |
+| GradientBoostingRegressor | sklearn | RMSE / R² / MAE / MAPE |
+| XGBoostRegressor | xgboost | RMSE / R² / MAE / MAPE |
+| LightGBMRegressor | lightgbm | RMSE / R² / MAE / MAPE |
+| Ridge | sklearn | RMSE / R² / MAE / MAPE |
+| Lasso | sklearn | RMSE / R² / MAE / MAPE |
+| ElasticNet | sklearn | RMSE / R² / MAE / MAPE |
+| ExtraTreesRegressor | sklearn | RMSE / R² / MAE / MAPE |
+| VotingEnsemble | auto-built | RMSE / R² / MAE / MAPE |
+| WeightedEnsemble | auto-built | RMSE / R² / MAE / MAPE |
+| StackingEnsemble | auto-built | RMSE / R² / MAE / MAPE |
 
 ---
 
-## 📈 Results
+## 📈 النتائج
 
 ### Spaceship Titanic (Classification)
-> 🏆 Champion → **RandomForest** — `val_accuracy=0.8154` · `val_roc_auc=0.9105`
 
-The champion model and full leaderboard are printed after each run and saved to `model_registry/champion_<timestamp>/model_card.json`.
+> 🏆 **Champion → RandomForest** — `val_accuracy = 0.8154` · `val_roc_auc = 0.9105`
 
-Current best: **81.5% validation accuracy** (improves with more trials).
+النموذج البطل وكامل الـ leaderboard يُحفظ تلقائياً بعد كل تشغيل في:
+
+```
+model_registry/
+└── champion_20240509_143022/
+    ├── model.pkl          ← النموذج المدرّب
+    ├── engineer.pkl       ← feature engineer
+    └── model_card.json    ← leaderboard كاملة + metadata
+```
+
+---
+
+## 🧪 الاختبارات
+
+```powershell
+# تشغيل كل الاختبارات
+pytest
+
+# مع تقرير التغطية
+pytest --cov=src --cov-report=term-missing
+
+# تشغيل module محدد
+pytest tests/test_data_processing/
+pytest tests/test_models/
+pytest tests/test_preprocessing/
+```
+
+### ما تغطيه الاختبارات
+
+| الملف | عدد الاختبارات | ما يغطيه |
+|---|---|---|
+| `test_task_detector.py` | 20 | الـ 6 قواعد + confidence + override |
+| `test_pipeline.py` | 10 | Feature engineering + no data leakage |
+| `test_evaluator.py` | 11 | Metrics classification + regression |
+| `test_search_space.py` | 9 | Model registry + instantiation |
+
+---
+
+## 📉 MLflow Dashboard
+
+```powershell
+mlflow ui --backend-store-uri sqlite:///spaceship_experiments/mlflow.db
+```
+
+افتح المتصفح على: **http://127.0.0.1:5000**
+
+تجد فيه لكل تشغيل: كل نموذج جرّبه + الـ hyperparameters + الـ metrics + النموذج المحفوظ.
+
+---
+
+## 🛠 استكشاف الأخطاء
+
+| المشكلة | الحل |
+|---|---|
+| `ModuleNotFoundError` | تأكد أنك فعّلت البيئة الافتراضية وشغّلت `pip install -e ".[dev]"` |
+| `FileNotFoundError: data/train.csv` | ضع `train.csv` و `test.csv` في مجلد `data/` |
+| `Target column not found` | تأكد من اسم العمود أو احذف `--target` ليأخذ آخر عمود تلقائياً |
+| Streamlit لا يفتح | تأكد أن المنفذ 8501 غير محجوز، أو شغّل: `streamlit run app.py --server.port 8502` |
+| التدريب بطيء | قلّل `--trials` إلى 10 للتجربة السريعة |
+
+---
+
+
+## 📈 Results
+
+ <p align="center">
+   <img src="img/1.png" width="600" alt="Results Table">
+ </p>
+
+ <p align="center">
+   <img src="img/2.png" width="600" alt="Results Table">
+ </p>
+
+## 📈 Final Results
+
+<video src="img/video.mp4" width="100%" controls>
+  Your browser does not support the video tag.
+</video>
+
+
+
+
+<div align="center">
+
+**Built with** 🐍 Python · 🤖 Optuna · 📊 MLflow · 🌊 Streamlit · 🔬 scikit-learn
+
+</div>

@@ -1,4 +1,4 @@
-artifact_path: file:D:/projects/py/mohammed.AI/spaceship_automl_project/mlruns/1/models/m-582251be8efa40b990491ad672b9cc15/artifacts
+name: file:D:/projects/py/mohammed.AI/spaceship_automl_project/mlruns/1/models/m-582251be8efa40b990491ad672b9cc15/artifacts
 flavors:
   python_function:
     env:

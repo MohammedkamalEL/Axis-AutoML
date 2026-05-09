@@ -17,7 +17,7 @@ def log_run(model_name: str, params: dict, metrics: dict, pipeline) -> None:
         }
         mlflow.log_params(safe_params)
         mlflow.log_metrics(metrics)
-        mlflow.sklearn.log_model(pipeline, artifact_path="model")
+        mlflow.sklearn.log_model(pipeline, name="model")
 
 
 def log_champion(champion_name: str, metrics: dict, pipeline) -> None:
@@ -25,4 +25,4 @@ def log_champion(champion_name: str, metrics: dict, pipeline) -> None:
     with mlflow.start_run(run_name=f"CHAMPION_{champion_name}"):
         mlflow.set_tag("role", "champion")
         mlflow.log_metrics(metrics)
-        mlflow.sklearn.log_model(pipeline, artifact_path="champion_model")
+        mlflow.sklearn.log_model(pipeline, name="champion_model")
