@@ -1,10 +1,8 @@
-<<<<<<< HEAD
+
 <div align="center">
 
-# 🚀 Spaceship Titanic — AutoML Pipeline
-=======
 # 🚀 The end-to-end AutoML engine: Drop your data, it detects and solves both Classification & Regression tasks
->>>>>>> 0e4525651ecb90bf0c0dcc3651c63c47b0370e07
+
 
 **مسار تعلم آلي مؤتمت بالكامل** يكتشف نوع المهمة تلقائياً، يبحث عن أفضل النماذج، يضبط معاملاتها، ويبني أنظمة ensemble — بدون أي تدخل يدوي.
 
@@ -392,9 +390,12 @@ mlflow ui --backend-store-uri sqlite:///spaceship_experiments/mlflow.db
 
 ## 📈 Final Results
 
-<video src="img/video.mp4" width="100%" controls>
-  Your browser does not support the video tag.
-</video>
+
+
+https://github.com/user-attachments/assets/6f4d4f59-3b8d-46bc-a8a6-0283817eb08f
+
+
+
 
 
 
