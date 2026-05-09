@@ -1,4 +1,10 @@
+<<<<<<< HEAD
+<div align="center">
+
 # 🚀 Spaceship Titanic — AutoML Pipeline
+=======
+# 🚀 The end-to-end AutoML engine: Drop your data, it detects and solves both Classification & Regression tasks
+>>>>>>> 0e4525651ecb90bf0c0dcc3651c63c47b0370e07
 
 **مسار تعلم آلي مؤتمت بالكامل** يكتشف نوع المهمة تلقائياً، يبحث عن أفضل النماذج، يضبط معاملاتها، ويبني أنظمة ensemble — بدون أي تدخل يدوي.
 
@@ -308,8 +314,93 @@ champion = max(all_models, key=champion_metric)
 ## 📈 النتائج
 
 ### Spaceship Titanic (Classification)
-> 🏆 Champion → **RandomForest** — `val_accuracy=0.8154` · `val_roc_auc=0.9105`
 
-The champion model and full leaderboard are printed after each run and saved to `model_registry/champion_<timestamp>/model_card.json`.
+> 🏆 **Champion → RandomForest** — `val_accuracy = 0.8154` · `val_roc_auc = 0.9105`
 
-Current best: **81.5% validation accuracy** (improves with more trials).
+النموذج البطل وكامل الـ leaderboard يُحفظ تلقائياً بعد كل تشغيل في:
+
+```
+model_registry/
+└── champion_20240509_143022/
+    ├── model.pkl          ← النموذج المدرّب
+    ├── engineer.pkl       ← feature engineer
+    └── model_card.json    ← leaderboard كاملة + metadata
+```
+
+---
+
+## 🧪 الاختبارات
+
+```powershell
+# تشغيل كل الاختبارات
+pytest
+
+# مع تقرير التغطية
+pytest --cov=src --cov-report=term-missing
+
+# تشغيل module محدد
+pytest tests/test_data_processing/
+pytest tests/test_models/
+pytest tests/test_preprocessing/
+```
+
+### ما تغطيه الاختبارات
+
+| الملف | عدد الاختبارات | ما يغطيه |
+|---|---|---|
+| `test_task_detector.py` | 20 | الـ 6 قواعد + confidence + override |
+| `test_pipeline.py` | 10 | Feature engineering + no data leakage |
+| `test_evaluator.py` | 11 | Metrics classification + regression |
+| `test_search_space.py` | 9 | Model registry + instantiation |
+
+---
+
+## 📉 MLflow Dashboard
+
+```powershell
+mlflow ui --backend-store-uri sqlite:///spaceship_experiments/mlflow.db
+```
+
+افتح المتصفح على: **http://127.0.0.1:5000**
+
+تجد فيه لكل تشغيل: كل نموذج جرّبه + الـ hyperparameters + الـ metrics + النموذج المحفوظ.
+
+---
+
+## 🛠 استكشاف الأخطاء
+
+| المشكلة | الحل |
+|---|---|
+| `ModuleNotFoundError` | تأكد أنك فعّلت البيئة الافتراضية وشغّلت `pip install -e ".[dev]"` |
+| `FileNotFoundError: data/train.csv` | ضع `train.csv` و `test.csv` في مجلد `data/` |
+| `Target column not found` | تأكد من اسم العمود أو احذف `--target` ليأخذ آخر عمود تلقائياً |
+| Streamlit لا يفتح | تأكد أن المنفذ 8501 غير محجوز، أو شغّل: `streamlit run app.py --server.port 8502` |
+| التدريب بطيء | قلّل `--trials` إلى 10 للتجربة السريعة |
+
+---
+
+
+## 📈 Results
+
+ <p align="center">
+   <img src="img/1.png" width="600" alt="Results Table">
+ </p>
+
+ <p align="center">
+   <img src="img/2.png" width="600" alt="Results Table">
+ </p>
+
+## 📈 Final Results
+
+<video src="img/video.mp4" width="100%" controls>
+  Your browser does not support the video tag.
+</video>
+
+
+
+
+<div align="center">
+
+**Built with** 🐍 Python · 🤖 Optuna · 📊 MLflow · 🌊 Streamlit · 🔬 scikit-learn
+
+</div>
